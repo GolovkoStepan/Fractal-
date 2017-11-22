@@ -3,14 +3,17 @@
 namespace FractalCore
 {
     [Serializable]
-    public class FractalData : ICloneable // класс, хранящий данные для расчета фрактала
+    public class FractalData : ICloneable        // класс, хранящий данные для расчета фрактала
     {
         private FractalEnumType fractalType;
 
-        public double SizeArea { get; set; } // коэффициент увеличения  
-        public double CenterX { get; set; } // координата X центра
-        public double CenterY { get; set; } // координата Y центра
-        public FractalEnumType FractalType  // тип фрактала
+        public double SizeArea { get; set; }     // коэффициент увеличения  
+        public double CenterX { get; set; }      // координата X центра
+        public double CenterY { get; set; }      // координата Y центра
+
+        public int ZoomFactor { get; set; } = 3; // фактор увеличения/уменьшения
+
+        public FractalEnumType FractalType       // тип фрактала
         {
             get
             {
@@ -40,12 +43,12 @@ namespace FractalCore
 
         public void ZoomPlus() // увеличение изображения
         {
-            SizeArea /= 3;
+            SizeArea /= ZoomFactor;
         }
 
         public void ZoomMinus() // уменьшение изображения
         {
-            SizeArea *= 3;
+            SizeArea *= ZoomFactor;
         }
 
         public void Reset() // метод сброса значений параметров по умолчанию
