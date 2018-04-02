@@ -50,11 +50,15 @@
     <Compile Include="Common\FastBitmap.cs" />
     <Compile Include="Common\PixelData.cs" />
     <Compile Include="FractalCreator.cs" />
-    <Compile Include="FractalData.cs" />
+    <Compile Include="Fractals\AbstractFractal.cs" />
     <Compile Include="FractalEnum.cs" />
+    <Compile Include="Fractals\FractalJulia.cs" />
+    <Compile Include="Fractals\FractalLambda.cs" />
+    <Compile Include="Fractals\FractalMandelbrot.cs" />
     <Compile Include="GenerationAlgorithms.cs" />
     <Compile Include="GenerationSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

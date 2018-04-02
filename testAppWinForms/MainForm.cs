@@ -4,17 +4,18 @@ using System.Windows.Forms;
 using FractalCore;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using FractalCore.Fractals;
 
 namespace TestAppWinForms
 {
     public partial class MainForm : Form
     {
-        FractalData fractalData = new FractalData(FractalEnumType.Mandelbrot);
+        AbstractFractal fractalData = new FractalMandelbrot();
         GenerationSettings genSettings = new GenerationSettings();
         ColorSettings colorSettings = new ColorSettings();
         FractalCreator creator;
 
-        FractalData fractalMapData = new FractalData(FractalEnumType.Mandelbrot);
+        AbstractFractal fractalMapData = new FractalMandelbrot();
         GenerationSettings genSetMap = new GenerationSettings();
         ColorSettings mapColorSettings = new ColorSettings();
         FractalCreator fractalMap;
@@ -113,21 +114,21 @@ namespace TestAppWinForms
             }
         }
 
-        private FractalEnumType GetFractalType()
+        private AbstractFractal GetFractalType()
         {
             switch(cbFractalType.SelectedIndex)
             {
                 case 0:
                     {
-                        return FractalEnumType.Mandelbrot;
+                        return new FractalMandelbrot();
                     }
                 case 1:
                     {
-                        return FractalEnumType.Julia;
+                        return new FractalJulia();
                     }
                 case 2:
                     {
-                        return FractalEnumType.Lambda;
+                        return new FractalLambda();
                     }
                 default:
                     {
@@ -284,7 +285,7 @@ namespace TestAppWinForms
 
         private async void cbFractalType_SelectionChangeCommitted(object sender, EventArgs e)
         {
-            fractalData.FractalType = GetFractalType();
+            fractalData = GetFractalType();
 
             lblPosXCenter.Text = $"Центр X: {fractalData.CenterX}";
             lblPosYCenter.Text = $"Центр Y: {fractalData.CenterY}";
@@ -292,10 +293,15 @@ namespace TestAppWinForms
 
             ProgramStatusBusy();
 
+            creator = new FractalCreator(fractalData, genSettings, colorSettings);
+
             pbFractalImage.Image = await creator.CreateAsync();
 
             // --------------- FractalMap --------------------
-            fractalMapData.FractalType = GetFractalType();
+            fractalMapData = GetFractalType();
+
+            fractalMap = new FractalCreator(fractalMapData, genSetMap, mapColorSettings);
+
             pbMapFractal.Image = fractalMap.Create();
             // -----------------------------------------------
 
@@ -405,7 +411,7 @@ namespace TestAppWinForms
 
                 using (FileStream fs = new FileStream(od.FileName, FileMode.Open))
                 {
-                    fractalData = (FractalData)formatter.Deserialize(fs);
+                    fractalData = (AbstractFractal)formatter.Deserialize(fs);
                 }
             }
             catch
@@ -416,23 +422,28 @@ namespace TestAppWinForms
 
             creator = new FractalCreator(fractalData, genSettings, colorSettings);
 
+            AbstractFractal bufMapData = (AbstractFractal)fractalData.Clone();
+            bufMapData.Reset();
+
+            fractalMap = new FractalCreator(bufMapData, genSetMap, mapColorSettings);
+
             lblPosXCenter.Text = $"Центр X: {fractalData.CenterX}";
             lblPosYCenter.Text = $"Центр Y: {fractalData.CenterY}";
             lblSizeArea.Text = $"Увеличение: {fractalData.SizeArea}";
 
             switch(fractalData.FractalType)
             {
-                case FractalEnumType.Mandelbrot:
+                case "Mandelbrot":
                     {
                         cbFractalType.SelectedIndex = 0;
                         break;
                     }
-                case FractalEnumType.Julia:
+                case "Julia":
                     {
                         cbFractalType.SelectedIndex = 1;
                         break;
                     }
-                case FractalEnumType.Lambda:
+                case "Lambda":
                     {
                         cbFractalType.SelectedIndex = 2;
                         break;
@@ -446,6 +457,7 @@ namespace TestAppWinForms
             ProgramStatusBusy();
 
             pbFractalImage.Image = await creator.CreateAsync();
+            pbMapFractal.Image = await fractalMap.CreateAsync();
 
             ProgramStatusDone();
 

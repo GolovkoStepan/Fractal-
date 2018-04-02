@@ -1,4 +1,5 @@
 ﻿using FractalCore.Common;
+using FractalCore.Fractals;
 using System;
 using System.Collections.Concurrent;
 using System.Drawing;
@@ -10,13 +11,17 @@ namespace FractalCore
 {
     public class FractalCreator // класс для создания изображений фракталов
     {
-        private FractalData fractalData; // данные фрактала
+        private AbstractFractal fractalData; // данные фрактала
+
         private GenerationSettings generationSettings; // настройки генерации
+
         private ColorSettings colorSettings; // настройки цветовой схемы
+
         private int[,] fractalMatrix = null; // матрица фрактала
+
         private int maxIterations; // максимальное число итераций
 
-        public FractalCreator(FractalData fractalData, GenerationSettings generationSettings, ColorSettings colorSettings)
+        public FractalCreator(AbstractFractal fractalData, GenerationSettings generationSettings, ColorSettings colorSettings)
         {
             this.fractalData = fractalData;
             this.generationSettings = generationSettings;
@@ -127,51 +132,15 @@ namespace FractalCore
         // метод, возвращающий матрицу с учетом типа фрактала и алгоритма расчета
         private int[,] GetFractalMatrix()
         {
-            switch(generationSettings.Algorithm)
+            switch (generationSettings.Algorithm)
             {
                 case GenerationAlgorithms.MultiThreadCalculation:
                     {
-                        switch(fractalData.FractalType)
-                        {
-                            case FractalEnumType.Mandelbrot:
-                                {
-                                    return GetFractalMatrixMandelbrotMultiThread();
-                                }
-                            case FractalEnumType.Julia:
-                                {
-                                    return GetFractalMatrixJuliaMultiThread();
-                                }
-                            case FractalEnumType.Lambda:
-                                {
-                                    return GetFractalMatrixLambdaMultiThread();
-                                }
-                            default:
-                                {
-                                    throw new NotImplementedException();
-                                }
-                        }
+                        return fractalData.GetFractalMatrixMultiThread(generationSettings);
                     }
                 case GenerationAlgorithms.OneThreadCalculation:
                     {
-                        switch (fractalData.FractalType)
-                        {
-                            case FractalEnumType.Mandelbrot:
-                                {
-                                    return GetFractalMatrixMandelbrotOneThread();
-                                }
-                            case FractalEnumType.Julia:
-                                {
-                                    return GetFractalMatrixJuliaOneThread();
-                                }
-                            case FractalEnumType.Lambda:
-                                {
-                                    return GetFractalMatrixLambdaOneThread();
-                                }
-                            default:
-                                {
-                                    throw new NotImplementedException();
-                                }
-                        }
+                        return fractalData.GetFractalMatrixOneThread(generationSettings);
                     }
                 default:
                     {
@@ -183,7 +152,7 @@ namespace FractalCore
         // метод, возвращающий изображение фрактала
         private Bitmap GetFractalBitmap(int[,] fractalMatrix)
         {
-            switch(colorSettings.Algorithm)
+            switch (colorSettings.Algorithm)
             {
                 case ColorAlgorithms.EscapeTimeAlgorithm:
                     {
@@ -208,9 +177,9 @@ namespace FractalCore
             var fb = new FastBitmap(bmp);
             PixelData pData;
 
-            for(var i = 0; i < generationSettings.Resolution.Width / generationSettings.QualityFactor; i++)
+            for (var i = 0; i < generationSettings.Resolution.Width / generationSettings.QualityFactor; i++)
             {
-                for(var j = 0; j < generationSettings.Resolution.Height / generationSettings.QualityFactor; j++)
+                for (var j = 0; j < generationSettings.Resolution.Height / generationSettings.QualityFactor; j++)
                 {
                     if (fractalMatrix[i, j] > generationSettings.IterationCount)
                     {
@@ -268,229 +237,5 @@ namespace FractalCore
         }
         #endregion
 
-        #region Методы однопоточного расчета матриц Фракталов
-        // метод, возвращающий матрицу для Лямбда - фрактала (однопоточные расчеты)
-        private int[,] GetFractalMatrixLambdaOneThread()
-        {
-            var fractalMatrix = new int[generationSettings.Resolution.Width, generationSettings.Resolution.Height];
-
-            for (var i = 0; i < generationSettings.Resolution.Width / generationSettings.QualityFactor; i++)
-            {
-                for (var j = 0; j < generationSettings.Resolution.Height / generationSettings.QualityFactor; j++)
-                {
-                    Complex z = new Complex(0.5, 0);
-                    Complex c = new Complex(((fractalData.CenterX - fractalData.SizeArea / 2) + i * (fractalData.SizeArea / (generationSettings.Resolution.Width / generationSettings.QualityFactor))),
-                                            ((fractalData.CenterY - fractalData.SizeArea / 2) + j * (fractalData.SizeArea / (generationSettings.Resolution.Height / generationSettings.QualityFactor))));
-
-                    int k;
-
-                    for (k = 1; k <= generationSettings.IterationCount; k++)
-                    {
-                        Complex lambda = new Complex(z.Re - Math.Pow(z.Re, 2) + Math.Pow(z.Im, 2), z.Im - 2 * z.Re * z.Im);
-
-                        z = c * lambda;
-
-                        if (z.MagnitudeSq > 4)
-                        {
-                            break;
-                        }
-                    }
-
-                    fractalMatrix[i, j] = k;
-                }
-            }
-
-            return fractalMatrix;
-        }
-
-        // метод, возвращающий матрицу для фрактала Жюлиа (однопоточные расчеты)
-        private int[,] GetFractalMatrixJuliaOneThread()
-        {
-            var fractalMatrix = new int[generationSettings.Resolution.Width, generationSettings.Resolution.Height];
-            Complex c = new Complex(-0.70176, -0.3842);
-
-            for (var i = 0; i < generationSettings.Resolution.Width / generationSettings.QualityFactor; i++)
-            {
-                for (var j = 0; j < generationSettings.Resolution.Height / generationSettings.QualityFactor; j++)
-                {
-                    Complex z = new Complex(((fractalData.CenterX - fractalData.SizeArea / 2) + i * (fractalData.SizeArea / (generationSettings.Resolution.Width / generationSettings.QualityFactor))),
-                                            ((fractalData.CenterY - fractalData.SizeArea / 2) + j * (fractalData.SizeArea / (generationSettings.Resolution.Height / generationSettings.QualityFactor))));
-
-                    int k;
-
-                    for (k = 1; k <= generationSettings.IterationCount; k++)
-                    {
-                        z = z * z + c; //formula
-
-                        if (z.MagnitudeSq > 4)
-                        {
-                            break;
-                        }
-                    }
-
-                    fractalMatrix[i, j] = k;
-                }
-            }
-
-            return fractalMatrix;
-        }
-
-        // метод, возвращающий матрицу для фрактала Мандельброта (однопоточные расчеты)
-        private int[,] GetFractalMatrixMandelbrotOneThread()
-        {
-            var fractalMatrix = new int[generationSettings.Resolution.Width, generationSettings.Resolution.Height];
-
-            for(var i = 0; i < generationSettings.Resolution.Width / generationSettings.QualityFactor; i++)
-            {
-                for(var j = 0; j < generationSettings.Resolution.Height / generationSettings.QualityFactor; j++)
-                {
-                    Complex z = new Complex();
-                    Complex c = new Complex(((fractalData.CenterX - fractalData.SizeArea / 2) + i * (fractalData.SizeArea / (generationSettings.Resolution.Width / generationSettings.QualityFactor))),
-                                            ((fractalData.CenterY - fractalData.SizeArea / 2) + j * (fractalData.SizeArea / (generationSettings.Resolution.Height / generationSettings.QualityFactor))));
-
-                    int k;
-
-                    for (k = 1; k <= generationSettings.IterationCount; k++)
-                    {
-                        z = z * z + c; //formula
-
-                        if (z.MagnitudeSq > 4)
-                        {
-                            break;
-                        }
-                    }
-
-                    fractalMatrix[i, j] = k;
-                }
-            }
-
-            return fractalMatrix;
-        }
-        #endregion
-
-        #region Методы многопоточного расчета матриц Фракталов
-        // метод, возвращающий матрицу для фрактала Мандельброта (многопоточные расчеты)
-        private int[,] GetFractalMatrixMandelbrotMultiThread()
-        {
-            var options = new ParallelOptions()
-            {
-                MaxDegreeOfParallelism = Environment.ProcessorCount - 1
-            };
-
-            var fractalMatrix = new int[generationSettings.Resolution.Width / generationSettings.QualityFactor, generationSettings.Resolution.Height / generationSettings.QualityFactor];
-
-            Parallel.ForEach(Partitioner.Create(0, ((generationSettings.Resolution.Width / generationSettings.QualityFactor) * (generationSettings.Resolution.Height / generationSettings.QualityFactor))), options, range =>
-            {
-                for (int index = range.Item1; index < range.Item2; index++)
-                {
-                    int index_i = index / (generationSettings.Resolution.Width / generationSettings.QualityFactor);
-                    int index_j = index % (generationSettings.Resolution.Height / generationSettings.QualityFactor);
-
-                    Complex z = new Complex();
-                    Complex c = new Complex(((fractalData.CenterX - fractalData.SizeArea / 2) + index_i * (fractalData.SizeArea / (generationSettings.Resolution.Width / generationSettings.QualityFactor))),
-                                            ((fractalData.CenterY - fractalData.SizeArea / 2) + index_j * (fractalData.SizeArea / (generationSettings.Resolution.Height / generationSettings.QualityFactor))));
-
-                    int k;
-
-                    for (k = 1; k <= generationSettings.IterationCount; k++)
-                    {
-                        z = z * z + c; //formula
-
-                        if (z.MagnitudeSq > 4)
-                        {
-                            break;
-                        }
-                    }
-
-                    fractalMatrix[index_i, index_j] = k;
-                }
-            });
-
-            return fractalMatrix;
-        }
-
-        // метод, возвращающий матрицу для фрактала Жюлиа (многопоточные расчеты)
-        private int[,] GetFractalMatrixJuliaMultiThread()
-        {
-            var options = new ParallelOptions()
-            {
-                MaxDegreeOfParallelism = Environment.ProcessorCount - 1
-            };
-
-            var fractalMatrix = new int[generationSettings.Resolution.Width / generationSettings.QualityFactor, generationSettings.Resolution.Height / generationSettings.QualityFactor];
-            Complex c = new Complex(-0.70176, -0.3842);
-
-            Parallel.ForEach(Partitioner.Create(0, ((generationSettings.Resolution.Width / generationSettings.QualityFactor) * (generationSettings.Resolution.Height / generationSettings.QualityFactor))), options, range =>
-            {
-                for (int index = range.Item1; index < range.Item2; index++)
-                {
-                    int index_i = index / (generationSettings.Resolution.Width / generationSettings.QualityFactor);
-                    int index_j = index % (generationSettings.Resolution.Height / generationSettings.QualityFactor);
-
-
-                    Complex z = new Complex(((fractalData.CenterX - fractalData.SizeArea / 2) + index_i * (fractalData.SizeArea / (generationSettings.Resolution.Width / generationSettings.QualityFactor))),
-                                            ((fractalData.CenterY - fractalData.SizeArea / 2) + index_j * (fractalData.SizeArea / (generationSettings.Resolution.Height / generationSettings.QualityFactor))));
-
-                    int k;
-
-                    for (k = 1; k <= generationSettings.IterationCount; k++)
-                    {
-                        z = z * z + c;
-
-                        if (z.MagnitudeSq > 4)
-                        {
-                            break;
-                        }
-                    }
-
-                    fractalMatrix[index_i, index_j] = k;
-                }
-            });
-
-            return fractalMatrix;
-        }
-
-        // метод, возвращающий матрицу для Лямбда - фрактала (многопоточные расчеты)
-        private int[,] GetFractalMatrixLambdaMultiThread()
-        {
-            var options = new ParallelOptions()
-            {
-                MaxDegreeOfParallelism = Environment.ProcessorCount - 1
-            };
-
-            var fractalMatrix = new int[generationSettings.Resolution.Width / generationSettings.QualityFactor, generationSettings.Resolution.Height / generationSettings.QualityFactor];
-
-            Parallel.ForEach(Partitioner.Create(0, ((generationSettings.Resolution.Width / generationSettings.QualityFactor) * (generationSettings.Resolution.Height / generationSettings.QualityFactor))), options, range =>
-            {
-                for (int index = range.Item1; index < range.Item2; index++)
-                {
-                    int index_i = index / (generationSettings.Resolution.Width / generationSettings.QualityFactor);
-                    int index_j = index % (generationSettings.Resolution.Height / generationSettings.QualityFactor);
-
-                    int k;
-
-                    Complex z = new Complex(0.5, 0);
-                    Complex c = new Complex(((fractalData.CenterX - fractalData.SizeArea / 2) + index_i * (fractalData.SizeArea / (generationSettings.Resolution.Width / generationSettings.QualityFactor))),
-                                            ((fractalData.CenterY - fractalData.SizeArea / 2) + index_j * (fractalData.SizeArea / (generationSettings.Resolution.Height / generationSettings.QualityFactor))));
-
-                    for (k = 1; k <= generationSettings.IterationCount; k++)
-                    {
-                        Complex lambda = new Complex(z.Re - Math.Pow(z.Re, 2) + Math.Pow(z.Im, 2), z.Im - 2 * z.Re * z.Im);
-
-                        z = c * lambda;
-
-                        if (z.MagnitudeSq > 4)
-                        {
-                            break;
-                        }
-                    }
-
-                    fractalMatrix[index_i, index_j] = k;
-                }
-            });
-
-            return fractalMatrix;
-        }
-        #endregion
     }
 }

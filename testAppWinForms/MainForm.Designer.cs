@@ -473,7 +473,7 @@
             // lblSizeArea
             // 
             this.lblSizeArea.AutoSize = true;
-            this.lblSizeArea.Location = new System.Drawing.Point(16, 150);
+            this.lblSizeArea.Location = new System.Drawing.Point(20, 165);
             this.lblSizeArea.Name = "lblSizeArea";
             this.lblSizeArea.Size = new System.Drawing.Size(41, 13);
             this.lblSizeArea.TabIndex = 2;
@@ -482,7 +482,7 @@
             // lblPosYCenter
             // 
             this.lblPosYCenter.AutoSize = true;
-            this.lblPosYCenter.Location = new System.Drawing.Point(16, 128);
+            this.lblPosYCenter.Location = new System.Drawing.Point(20, 133);
             this.lblPosYCenter.Name = "lblPosYCenter";
             this.lblPosYCenter.Size = new System.Drawing.Size(41, 13);
             this.lblPosYCenter.TabIndex = 1;
@@ -491,7 +491,7 @@
             // lblPosXCenter
             // 
             this.lblPosXCenter.AutoSize = true;
-            this.lblPosXCenter.Location = new System.Drawing.Point(16, 105);
+            this.lblPosXCenter.Location = new System.Drawing.Point(20, 99);
             this.lblPosXCenter.Name = "lblPosXCenter";
             this.lblPosXCenter.Size = new System.Drawing.Size(41, 13);
             this.lblPosXCenter.TabIndex = 0;
